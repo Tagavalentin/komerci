@@ -1,12 +1,3 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
-
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  appBaseUrl
-});
+// Point d'entrée historique : le SDK Base44 est remplacé par le client local
+// (src/api/client.js) adossé au serveur Express + MySQL.
+export { base44, getAccessToken, setAccessToken, ApiError } from './client';
