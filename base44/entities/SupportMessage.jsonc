@@ -1,0 +1,61 @@
+{
+  "name": "SupportMessage",
+  "type": "object",
+  "properties": {
+    "nom": {
+      "type": "string",
+      "description": "Nom de la personne qui \u00e9crit"
+    },
+    "email": {
+      "type": "string",
+      "description": "Adresse de r\u00e9ponse"
+    },
+    "sujet": {
+      "type": "string",
+      "description": "Objet de la demande"
+    },
+    "message": {
+      "type": "string",
+      "description": "Contenu du message"
+    },
+    "statut": {
+      "type": "string",
+      "enum": [
+        "nouveau",
+        "traite"
+      ],
+      "default": "nouveau"
+    }
+  },
+  "required": [
+    "email",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "reference": {
+      "type": "string",
+      "description": "R\u00e9f\u00e9rence lisible de la commande"
+    },
+    "vendor_id": {
+      "type": "string",
+      "description": "Vendeur qui traite la commande"
+    },
+    "vendeur_nom": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_nom": {
+      "type": "string"
+    },
+    "client_telephone": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string"
+    },
+    "total": {
+      "type": "number",
+      "description": "Total recalcul\u00e9 c\u00f4t\u00e9 serveur"
+    },
+    "statut": {
+      "type": "string",
+      "enum": [
+        "en_attente",
+        "payee",
+        "en_preparation",
+        "expediee",
+        "livree",
+        "annulee"
+      ],
+      "default": "en_attente"
+    },
+    "adresse_livraison": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "items_count": {
+      "type": "number"
+    },
+    "paiement_ref": {
+      "type": "string",
+      "description": "Référence de la transaction de paiement (FedaPay)"
+    }
+  },
+  "required": [
+    "reference",
+    "total",
+    "statut"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.vendor_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
