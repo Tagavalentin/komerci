@@ -1,5 +1,3 @@
-import { getAccessToken } from '@base44/sdk';
-
 const isNode = typeof window === 'undefined';
 
 const isClearAccessTokenRequested = () =>
@@ -15,8 +13,10 @@ const getAppParams = () => {
 		clearStoredAccessToken();
 	}
 	return {
-		appId: import.meta.env.VITE_BASE44_APP_ID,
-		token: getAccessToken(),
+		// Identifiant factice au format Base44 (24 hex) : certaines pages
+		// (flux MFA) valident ce format pour construire des URLs /api/apps/<id>/…
+		appId: import.meta.env.VITE_BASE44_APP_ID || 'a1b2c3d4e5f60718293a4b5c',
+		token: !isNode ? window.localStorage.getItem('token') : null,
 		functionsVersion: (!isNode && new URLSearchParams(window.location.search).get("functions_version")?.trim()) || import.meta.env.VITE_BASE44_FUNCTIONS_VERSION,
 		appBaseUrl: import.meta.env.VITE_BASE44_APP_BASE_URL,
 	}

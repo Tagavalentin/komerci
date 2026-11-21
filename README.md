@@ -1,62 +1,65 @@
-# Base44 Project
+# Komerci
 
-Use this repository to run and edit the app locally, then publish changes back through Base44.
+Application marketplace (React + Vite) avec backend local **Express + MySQL/MariaDB**.
+Le frontend est une SPA qui consomme l'API via un client compatible (`src/api/client.js`),
+qui reproduit la surface du SDK Base44 (`base44.entities.*`, `base44.auth.*`,
+`base44.functions.invoke`, `base44.integrations.Core.UploadPublicFile`).
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+## Prérequis
 
-## Prerequisites
+1. **MySQL/MariaDB** accessible (XAMPP inclus : `C:\xampp\mysql\bin\mysqld.exe`).
+2. Node.js 18+.
 
-1. Clone the repository using the project's Git URL.
-2. Navigate to the project directory.
-3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
-5. Install [Deno](https://docs.deno.com/runtime/getting_started/installation/) — the local Base44 backend runs on it.
-
-Run `base44 --help` (or see the [CLI reference](https://docs.base44.com/developers/references/cli/commands/introduction)) for the full command surface.
-
-## Run Locally
-
-Three commands, from the project root:
+## Installation
 
 ```bash
-base44 login   # one-time per machine
-base44 link    # one-time per clone
-base44 dev     # local backend + frontend together
+npm install                 # frontend
+cd server && npm install    # backend API
 ```
 
-Open the frontend URL that `base44 dev` prints (typically `http://localhost:5173`).
+## Configuration
 
-Notes:
+Copier `server/.env.example` vers `server/.env` et ajuster :
 
-- **Every fresh clone needs `base44 link`.** It writes `base44/.app.jsonc` (the app-id pointer), which is deliberately gitignored. Your app id is in the Builder URL (`app.base44.com/apps/<id>/...`); `base44 link --help` shows the non-interactive flags.
-- **`base44 dev` runs the frontend for you** (via `site.serveCommand` in this repo's `base44/config.jsonc`) — never run `npm run dev` yourself: alone it serves a UI with no backend behind it (`[base44] Proxy not enabled`, every `/api` call fails), and alongside `base44 dev` the second Vite silently takes the next port and you end up looking at the wrong one.
-- **The app must be published at least once for the UI to load under `base44 dev`.** The frontend boots by fetching app settings from the hosted app; before the first publish that fails and every page redirects to login. The local API works regardless.
-- Entities, functions, and auth run locally — entity data is **in-memory only**, wiped when `base44 dev` restarts. Everything else (Core integrations, OAuth login) is forwarded to your deployed app. Full breakdown: [Local development overview](https://docs.base44.com/developers/backend/overview/local-dev/local-development-overview).
+| Variable | Rôle |
+|---|---|
+| `DB_HOST` `DB_PORT` `DB_USER` `DB_PASSWORD` `DB_NAME` | Connexion MySQL (base créée automatiquement) |
+| `JWT_SECRET` | Secret de signature des tokens (à changer en prod) |
+| `ADMIN_EMAILS` | Emails promus `role=admin` à l'inscription/connexion |
+| `APP_URL` | URL publique du frontend (liens emails, OAuth) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` | Connexion Google (optionnel) |
+| `FEDAPAY_SECRET_KEY` / `FEDAPAY_WEBHOOK_SECRET` / `FEDAPAY_ENV` / `PUBLIC_APP_URL` | Paiement FedaPay (optionnel) |
 
-## Frontend Only, Hosted Backend
+## Lancer en dev
 
-To work on just the frontend against your app's live hosted backend:
+Trois processus :
 
 ```bash
-base44 dev --remote
+# 1. MySQL (si XAMPP et non démarré)
+C:\xampp\mysql\bin\mysqld.exe --defaults-file=C:\xampp\mysql\bin\my.ini --console
+
+# 2. API backend (port 3001)
+cd server && npm run dev        # ou : npm start
+
+# 3. Frontend Vite (proxy /api → :3001)
+npm run dev
 ```
 
-⚠️ In this mode writes go to your app's **production data** — plain `base44 dev` keeps everything local.
+Puis ouvrir l'URL affichée par Vite (http://localhost:5173 ou 5174).
 
-## Publish Your Changes
+## Structure
 
-After pushing your changes to git, open the Base44 dashboard and publish the app:
+- `src/api/client.js` — client HTTP remplaçant `@base44/sdk`.
+- `src/api/base44Client.js` — ré-export historique (`import { base44 } from '@/api/base44Client'`).
+- `server/index.js` — routes auth, entités, fonctions, uploads, OAuth Google.
+- `server/entities.js` — couche entités (table `records` + règles d'accès).
+- `server/functions.js` — checkoutCart, initiatePayment, simulatePayment, updateOrderStatus, fedapayWebhook.
+- `server/orderEmails.js` + `server/mailer.js` — emails logués en console (SMTP à brancher).
+
+## Vérifications
 
 ```bash
-base44 dashboard open
+npm run lint
+npm run typecheck
+npm run build
 ```
-
-This repo syncs to Base44 through git, so publish from the dashboard rather than `base44 deploy` — a CLI deploy ships your local tree directly, bypassing the sync, and the deployed state silently diverges from the repo.
-
-## Docs & Support
-
-GitHub integration: [https://docs.base44.com/developers/app-code/local-development/github](https://docs.base44.com/developers/app-code/local-development/github)
-
-Local development: [https://docs.base44.com/developers/backend/overview/local-dev/local-development-overview](https://docs.base44.com/developers/backend/overview/local-dev/local-development-overview)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
