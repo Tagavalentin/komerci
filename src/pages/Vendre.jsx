@@ -1,8 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Check, Loader2, Store } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { ArrowRight, Check, Store } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { canSell } from '@/lib/homeRoute';
 import Brand from '@/components/layout/Brand';
@@ -24,7 +23,7 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  { num: '01', title: 'Créez votre compte', text: 'Une adresse email, un mot de passe, et vous choisissez le profil vendeur.' },
+  { num: '01', title: 'Créez votre compte', text: 'Une adresse email et un mot de passe — l’administrateur active votre espace vendeur.' },
   { num: '02', title: 'Habillez votre boutique', text: 'Le nom de votre commerce, votre ville et quelques mots sur votre savoir-faire.' },
   { num: '03', title: 'Mettez vos produits en ligne', text: 'Un produit publié = une commande possible dès la même journée.' },
 ];
@@ -37,15 +36,16 @@ const CHECKLIST = [
 ];
 
 export default function Vendre() {
-  const { isAuthenticated, user, checkUserAuth } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const seller = canSell(user);
 
   async function openShop() {
     setError('');
+    setNotice('');
     if (!isAuthenticated) {
       navigate('/register');
       return;
@@ -54,15 +54,11 @@ export default function Vendre() {
       navigate('/vendeur');
       return;
     }
-    setBusy(true);
-    try {
-      await base44.auth.updateMe({ account_type: 'vendeur' });
-      await checkUserAuth();
-      navigate('/vendeur', { replace: true });
-    } catch (e) {
-      setError("Impossible d'ouvrir votre boutique pour le moment. Réessayez.");
-      setBusy(false);
-    }
+    // L'espace vendeur est attribué par l'administration : on invite le
+    // visiteur à faire une demande via le support.
+    setNotice(
+      "L'ouverture d'un espace vendeur se fait sur demande. Contactez l'administrateur depuis la page Support pour que votre boutique soit activée.",
+    );
   }
 
   return (
@@ -80,8 +76,7 @@ export default function Vendre() {
                 <Link to="/login">Se connecter</Link>
               </Button>
             )}
-            <Button className="rounded-full text-sm" onClick={openShop} disabled={busy}>
-              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button className="rounded-full text-sm" onClick={openShop}>
               {seller ? 'Mon espace vendeur' : 'Ouvrir ma boutique'}
             </Button>
           </div>
@@ -104,12 +99,8 @@ export default function Vendre() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button size="lg" className="rounded-full" onClick={openShop} disabled={busy}>
-              {busy ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowRight className="mr-2 h-4 w-4" />
-              )}
+            <Button size="lg" className="rounded-full" onClick={openShop}>
+              <ArrowRight className="mr-2 h-4 w-4" />
               {seller ? 'Aller à mon espace vendeur' : 'Ouvrir ma boutique'}
             </Button>
             {!isAuthenticated && (
@@ -122,6 +113,14 @@ export default function Vendre() {
             )}
           </div>
           {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+          {notice && (
+            <p className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+              {notice}{' '}
+              <Link to="/support" className="font-semibold text-foreground underline-offset-4 hover:underline">
+                Aller au support
+              </Link>
+            </p>
+          )}
         </section>
 
         <section className="grid grid-cols-1 gap-4 border-t border-border pt-10 md:grid-cols-3">
@@ -165,7 +164,7 @@ export default function Vendre() {
             <Button
               className="mt-7 w-full rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90"
               onClick={openShop}
-              disabled={busy}
+             
             >
               {seller ? 'Mon espace vendeur' : 'Commencer maintenant'}
             </Button>

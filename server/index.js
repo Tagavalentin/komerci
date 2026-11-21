@@ -164,6 +164,11 @@ app.get('/api/auth/me', requireAuth, (req, res) => res.json(req.user));
 
 app.patch('/api/auth/me', requireAuth, async (req, res) => {
   try {
+    // Le statut vendeur (espace de vente) est attribué par l'administration
+    // via l'entité User — un utilisateur ne peut pas se l'auto-accorder.
+    if (req.body?.account_type === 'vendeur' && req.user.role !== 'admin') {
+      return err(res, 403, 'Le statut vendeur est attribué par l’administration');
+    }
     const updates = {};
     for (const field of PROFILE_FIELDS) {
       if (req.body?.[field] !== undefined) updates[field] = req.body[field];
@@ -353,6 +358,10 @@ entityRouter.post('/:entity', requireAuth, async (req, res) => {
   if (!ENTITY_NAMES.includes(entity)) return err(res, 404, 'Entité inconnue');
   if (entity === 'User') return err(res, 403, 'Utilisez le endpoint profil');
   if (!canCreate(entity, req.user)) return err(res, 403, 'Accès refusé');
+  // Publier un produit nécessite un espace vendeur (ou admin).
+  if (entity === 'Product' && req.user.role !== 'admin' && req.user.account_type !== 'vendeur') {
+    return err(res, 403, 'Réservé aux vendeurs');
+  }
   const record = await createRecord(entity, req.body || {}, req.user.id);
   res.status(201).json(record);
 });
@@ -387,6 +396,9 @@ entityRouter.patch('/:entity/:id', requireAuth, async (req, res) => {
   }
   const record = await getRecord(entity, id);
   if (!record) return err(res, 404, 'Introuvable');
+  if (entity === 'Product' && req.user.role !== 'admin' && req.user.account_type !== 'vendeur') {
+    return err(res, 403, 'Réservé aux vendeurs');
+  }
   if (!canWrite(entity, record, req.user, 'update')) return err(res, 403, 'Accès refusé');
   const updated = await updateRecord(entity, id, req.body || {});
   res.json(updated);
@@ -398,6 +410,9 @@ entityRouter.delete('/:entity/:id', requireAuth, async (req, res) => {
   if (entity === 'User') return err(res, 403, 'Suppression non supportée');
   const record = await getRecord(entity, id);
   if (!record) return err(res, 404, 'Introuvable');
+  if (entity === 'Product' && req.user.role !== 'admin' && req.user.account_type !== 'vendeur') {
+    return err(res, 403, 'Réservé aux vendeurs');
+  }
   if (!canWrite(entity, record, req.user, 'delete')) return err(res, 403, 'Accès refusé');
   await deleteRecord(entity, id);
   res.json({ success: true });

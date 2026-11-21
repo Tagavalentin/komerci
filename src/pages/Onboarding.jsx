@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Store, ShoppingBasket, ArrowRight, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
+import { isAdmin } from '@/lib/homeRoute';
 import { Button } from '@/components/ui/button';
 import Brand from '@/components/layout/Brand';
 
@@ -27,6 +28,10 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState('');
+
+  // Seul l'administrateur attribue le statut vendeur : les autres comptes
+  // choisissent uniquement entre « acheter » et le parcours par défaut.
+  const choices = isAdmin(user) ? CHOICES : CHOICES.filter((c) => c.value === 'client');
 
   async function choose(value) {
     setBusy(value);
@@ -58,7 +63,7 @@ export default function Onboarding() {
         </p>
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {CHOICES.map((choice) => {
+          {choices.map((choice) => {
             const Icon = choice.icon;
             return (
               <button
@@ -88,6 +93,17 @@ export default function Onboarding() {
             );
           })}
         </div>
+
+        {!isAdmin(user) && (
+          <p className="mt-6 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            Vous souhaitez vendre vos articles ? L'espace vendeur est ouvert sur demande par
+            l'administrateur —{' '}
+            <a href="/support" className="font-semibold text-foreground underline-offset-4 hover:underline">
+              contactez le support
+            </a>
+            .
+          </p>
+        )}
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 

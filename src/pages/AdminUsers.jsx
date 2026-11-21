@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { initialsOf, formatDate } from '@/lib/format';
@@ -29,6 +30,22 @@ export default function AdminUsers() {
       cancelled = true;
     };
   }, []);
+
+  async function toggleSeller(target) {
+    const next = target.account_type === 'vendeur' ? 'client' : 'vendeur';
+    try {
+      const updated = await base44.entities.User.update(target.id, { account_type: next });
+      setUsers((prev) =>
+        prev.map((item) => (item.id === target.id ? { ...item, account_type: next, ...updated } : item)),
+      );
+      toast({
+        title: next === 'vendeur' ? 'Espace vendeur activé' : 'Statut vendeur retiré',
+        description: `${target.full_name || target.email} ${next === 'vendeur' ? 'peut désormais vendre' : 'ne peut plus vendre'}.`,
+      });
+    } catch (e) {
+      toast({ title: 'Action impossible', description: 'Réessayez dans un instant.', variant: 'destructive' });
+    }
+  }
 
   async function toggleActive(target) {
     const next = target.is_active === false;
@@ -97,6 +114,16 @@ export default function AdminUsers() {
                 <span className="hidden rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-muted-foreground sm:inline-flex">
                   {item.role === 'admin' ? 'Admin' : item.account_type === 'vendeur' ? 'Vendeur' : 'Client'}
                 </span>
+                {item.role !== 'admin' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => toggleSeller(item)}
+                  >
+                    {item.account_type === 'vendeur' ? 'Retirer vendeur' : 'Rendre vendeur'}
+                  </Button>
+                )}
                 <div className="flex items-center gap-2">
                   <span className={active ? 'text-xs text-muted-foreground' : 'text-xs font-semibold text-destructive'}>
                     {active ? 'Actif' : 'Suspendu'}
