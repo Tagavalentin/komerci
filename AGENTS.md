@@ -26,9 +26,11 @@ npx skills add base44/skills
 
 ## Working Notes
 
-- Use `base44 dev` as the default local development command when you need the local Base44 backend. It can run the backend and frontend together.
-- When docs or code mention the frontend being started automatically, that usually means the Base44 project config includes `site.serveCommand`, for example `"serveCommand": "npm run dev"` in `base44/config.jsonc`.
-- Use `npm run dev` only for frontend-only work against the hosted Base44 backend.
-- Prefer the existing Base44 CLI workflow over adding new npm scripts for Base44-specific tasks.
-- Reuse the existing SDK client and Vite plugin patterns before adding new Base44 integration paths.
-- Run the relevant checks from `package.json` before finishing code changes.
+- **Backend local** : Express + MySQL dans `server/` (voir README). Le frontend ne dépend plus de Base44 : `src/api/client.js` remplace `@base44/sdk` en gardant la même surface (`base44.entities`, `base44.auth`, `base44.functions`).
+- **Dev** : 3 processus — MySQL, `cd server && npm run dev` (API :3001), `npm run dev` (Vite, proxy `/api` → :3001). Ne jamais lancer le frontend seul sans l'API : toutes les données passeront par `/api`.
+- **Auth** : JWT dans `localStorage('token')` ; les routes `/api/apps/:appId/auth/*` et `/api/apps/public/login-info/*` sont conservées pour compatibilité avec `src/lib/authMfaFlow.js` (MFA non implémentée, `mfa_policy: 'none'`).
+- **Emails** : `server/mailer.js` logue en console ; brancher SMTP ici pour l'activer.
+- **Uploads** : `POST /api/upload` (multer) → `server/uploads`, servi sous `/api/uploads`.
+- **Entités** : stockées en JSON dans la table `records` ; les RLS des `base44/entities/*.jsonc` sont reproduites dans `server/entities.js` (`ENTITIES`).
+- **Config** : `server/.env` (gitignoré) — voir `server/.env.example`.
+- Run the relevant checks from `package.json` before finishing code changes (`lint`, `typecheck`, `build`).
