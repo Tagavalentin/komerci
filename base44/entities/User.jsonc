@@ -1,0 +1,35 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "client",
+        "vendeur"
+      ],
+      "description": "Profil choisi \u00e0 l'inscription : vendeur ou client"
+    },
+    "phone": {
+      "type": "string",
+      "description": "T\u00e9l\u00e9phone de contact"
+    },
+    "store_name": {
+      "type": "string",
+      "description": "Nom de la boutique (vendeur)"
+    },
+    "store_city": {
+      "type": "string",
+      "description": "Ville de la boutique"
+    },
+    "store_description": {
+      "type": "string",
+      "description": "Pr\u00e9sentation de la boutique"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Compte activ\u00e9 par l'administration"
+    }
+  }
+}
